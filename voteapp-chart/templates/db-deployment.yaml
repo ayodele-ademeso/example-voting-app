@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: db
+  name: db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+      - image: postgres:15-alpine
+        name: postgres
+        env:
+        - name: POSTGRES_USER
+          value: postgres
+        - name: POSTGRES_PASSWORD
+          value: postgres
+        ports:
+        - containerPort: 5432
+          name: postgres
+        resources:
+          requests:
+            cpu: "0.1"
+            memory: "128Mi"
+          limits:
+            cpu: "0.2"
+            memory: "256Mi"
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: db-persistent-storage
+          subPath: postgres #set this to handle postgres init error https://serverfault.com/questions/1018377/postgres-mount-volume-error-in-k8s
+        # - mountPath: /path/to/mount/configmap
+        #   name: configMapName
+      volumes:
+      - name: db-persistent-storage
+        persistentVolumeClaim:
+          claimName: db-pvc
+      - name: db-data #you can map configmap as a volume here as well
+        emptyDir: {} 
+          # configMap:
+          #   name: configMapName
