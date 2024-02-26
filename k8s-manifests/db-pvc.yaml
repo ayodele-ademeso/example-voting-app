@@ -8,5 +8,5 @@ spec:
   volumeMode: Filesystem #defaults to this if you don't specify volumeMode
   resources:
     requests:
-      storage: 4Gi
-  storageClassName: ebs-sc
+      storage: 1Gi
+  # storageClassName: ebs-sc #optional, but recommended for AWS EBS volumes.
