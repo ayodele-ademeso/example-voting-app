@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "voteapp-helm.fullname" . }}-db-pvc
+  labels:
+  {{- include "voteapp-helm.labels" . | nindent 4 }}
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.pvc.dbPvc.storageRequest | quote }}
+  volumeMode: Filesystem

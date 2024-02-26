@@ -1,0 +1,171 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "voteapp-helm.fullname" . }}-db
+  labels:
+    app: db
+  {{- include "voteapp-helm.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.db.replicas }}
+  selector:
+    matchLabels:
+      app: db
+    {{- include "voteapp-helm.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: db
+      {{- include "voteapp-helm.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - env:
+        - name: POSTGRES_USER
+          value: {{ quote .Values.db.postgres.env.postgresUser }}
+        - name: POSTGRES_PASSWORD
+          value: {{ quote .Values.db.postgres.env.postgresPassword }}
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        image: {{ .Values.db.postgres.image.repository }}:{{ .Values.db.postgres.image.tag
+          | default .Chart.AppVersion }}
+        name: postgres
+        ports:
+        - containerPort: 5432
+          name: postgres
+        resources: {{- toYaml .Values.db.postgres.resources | nindent 10 }}
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: db-persistent-storage
+          subPath: postgres
+      volumes:
+      - name: db-persistent-storage
+        persistentVolumeClaim:
+          claimName: {{ include "voteapp-helm.fullname" . }}-db-pvc
+      - emptyDir: {}
+        name: db-data
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "voteapp-helm.fullname" . }}-redis
+  labels:
+    app: redis
+  {{- include "voteapp-helm.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.redis.replicas }}
+  selector:
+    matchLabels:
+      app: redis
+    {{- include "voteapp-helm.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: redis
+      {{- include "voteapp-helm.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - env:
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        image: {{ .Values.redis.redis.image.repository }}:{{ .Values.redis.redis.image.tag
+          | default .Chart.AppVersion }}
+        name: redis
+        ports:
+        - containerPort: 6379
+          name: redis
+        resources: {}
+        volumeMounts:
+        - mountPath: /data
+          name: redis-data
+      volumes:
+      - emptyDir: {}
+        name: redis-data
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "voteapp-helm.fullname" . }}-result
+  labels:
+    app: result
+  {{- include "voteapp-helm.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.result.replicas }}
+  selector:
+    matchLabels:
+      app: result
+    {{- include "voteapp-helm.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: result
+      {{- include "voteapp-helm.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - env:
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        image: {{ .Values.result.result.image.repository }}:{{ .Values.result.result.image.tag
+          | default .Chart.AppVersion }}
+        name: result
+        ports:
+        - containerPort: 80
+          name: result
+        resources: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "voteapp-helm.fullname" . }}-vote
+  labels:
+    app: vote
+  {{- include "voteapp-helm.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.vote.replicas }}
+  selector:
+    matchLabels:
+      app: vote
+    {{- include "voteapp-helm.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: vote
+      {{- include "voteapp-helm.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - env:
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        image: {{ .Values.vote.vote.image.repository }}:{{ .Values.vote.vote.image.tag
+          | default .Chart.AppVersion }}
+        name: vote
+        ports:
+        - containerPort: 80
+          name: vote
+        resources: {{- toYaml .Values.vote.vote.resources | nindent 10 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "voteapp-helm.fullname" . }}-worker
+  labels:
+    app: worker
+  {{- include "voteapp-helm.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.worker.replicas }}
+  selector:
+    matchLabels:
+      app: worker
+    {{- include "voteapp-helm.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: worker
+      {{- include "voteapp-helm.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - env:
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        image: {{ .Values.worker.worker.image.repository }}:{{ .Values.worker.worker.image.tag
+          | default .Chart.AppVersion }}
+        name: worker
+        resources: {}
